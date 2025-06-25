@@ -4,6 +4,8 @@ import dotenv from 'dotenv';
 dotenv.config();
 import connectDb from './src/config/dbConfig.js';
 import productRoutes from './src/product/productRoutes.js';
+import dishTypeRoutes from './src/dishType/dishTypeRoutes.js';
+import foodRoutes from './src/food/foodRoutes.js';
 
 const app = express();
 
@@ -13,6 +15,8 @@ app.use(express.json());
 app.use(cors());
 
 app.use('/api', productRoutes);
+app.use('/api', dishTypeRoutes);
+app.use('/api', foodRoutes);
 app.get('/', (req, res) => {
     res.send('Welcome to the Product API');
 });
