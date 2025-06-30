@@ -1,30 +1,44 @@
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
-dotenv.config();
+import cookieParser from 'cookie-parser';
+import passport from 'passport';
+
 import connectDb from './src/config/dbConfig.js';
 import productRoutes from './src/product/productRoutes.js';
 import dishTypeRoutes from './src/dishType/dishTypeRoutes.js';
 import foodRoutes from './src/food/foodRoutes.js';
+import userRoutes from './src/user/userRoutes.js';
+import './src/user/passport.js';
+
+dotenv.config();
 
 const app = express();
 
-// Middleware to parse JSON bodies
+// Middleware
+app.use(cors({
+  origin: process.env.CLIENT_URL || 'http://localhost:5173',
+  credentials: true,
+}));
 app.use(express.json());
-// Enable CORS for all routes
-app.use(cors());
+app.use(cookieParser());
+app.use(passport.initialize());
 
+// Routes
 app.use('/api', productRoutes);
 app.use('/api', dishTypeRoutes);
 app.use('/api', foodRoutes);
+app.use('/api/user', userRoutes); // ✅ Use consistent route and folder
+
 app.get('/', (req, res) => {
-    res.send('Welcome to the Product API');
+  res.send('Welcome to the Product API with Auth');
 });
 
-const PORT = process.env.PORT || 3001;
-//connect to the database
-connectDb()
+// Connect to MongoDB
+connectDb();
 
-app.listen(PORT, ()=>{
-    console.log(`Server is running on port ${PORT}`);
-})
+// Start Server
+const PORT = process.env.PORT || 3001;
+app.listen(PORT, () => {
+  console.log(`🚀 Server running on port ${PORT}`);
+});
