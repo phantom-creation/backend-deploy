@@ -8,6 +8,7 @@ import connectDb from "./src/config/dbConfig.js";
 import productRoutes from "./src/product/productRoutes.js";
 import dishTypeRoutes from "./src/dishType/dishTypeRoutes.js";
 import foodRoutes from "./src/food/foodRoutes.js";
+import userRoutes from "./src/user/userRoutes.js";
 
 dotenv.config();
 
@@ -28,6 +29,7 @@ app.use(passport.initialize());
 app.use("/api", productRoutes);
 app.use("/api", dishTypeRoutes);
 app.use("/api", foodRoutes);
+app.use("/api/user", userRoutes);
 
 app.get("/", (req, res) => {
   res.send("Welcome to the Product API with Auth");
