@@ -28,7 +28,7 @@ app.use(passport.initialize());
 app.use('/api', productRoutes);
 app.use('/api', dishTypeRoutes);
 app.use('/api', foodRoutes);
-app.use('/api/user', userRoutes); // ✅ Use consistent route and folder
+app.use('/api', userRoutes); // ✅ Use consistent route and folder
 
 app.get('/', (req, res) => {
   res.send('Welcome to the Product API with Auth');
