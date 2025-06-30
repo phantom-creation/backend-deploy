@@ -1,4 +1,3 @@
-// user/userController.js
 import jwt from "jsonwebtoken";
 import User from "./userModel.js";
 
@@ -16,6 +15,7 @@ const sendToken = (user, res) => {
   });
 
   res.status(200).json({
+    success: true,
     user: {
       id: user._id,
       fullName: user.fullName,
@@ -29,12 +29,13 @@ export const register = async (req, res) => {
   try {
     const { fullName, email, password } = req.body;
     const exists = await User.findOne({ email });
-    if (exists) return res.status(400).json({ message: "Email already in use" });
+    if (exists)
+      return res.status(400).json({ success: false, message: "Email already in use" });
 
     const user = await User.create({ fullName, email, password });
     sendToken(user, res);
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    res.status(500).json({ success: false, message: err.message });
   }
 };
 
@@ -44,11 +45,11 @@ export const login = async (req, res) => {
     const { email, password } = req.body;
     const user = await User.findOne({ email });
     if (!user || !(await user.comparePassword(password)))
-      return res.status(400).json({ message: "Invalid email or password" });
+      return res.status(400).json({ success: false, message: "Invalid email or password" });
 
     sendToken(user, res);
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    res.status(500).json({ success: false, message: err.message });
   }
 };
 
@@ -59,11 +60,25 @@ export const logout = (req, res) => {
     sameSite: "strict",
     secure: process.env.NODE_ENV === "production",
   });
-  res.status(200).json({ message: "Logged out successfully" });
+  res.status(200).json({ success: true, message: "Logged out successfully" });
 };
 
-// Protected route example
+// Get profile from cookie-protected route
 export const getProfile = async (req, res) => {
-  const user = await User.findById(req.user.id).select("-password");
-  res.status(200).json(user);
+  try {
+    const user = await User.findById(req.user.id).select("-password");
+    if (!user)
+      return res.status(404).json({ success: false, message: "User not found" });
+
+    res.status(200).json({
+      success: true,
+      user: {
+        id: user._id,
+        fullName: user.fullName,
+        email: user.email,
+      },
+    });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
 };
