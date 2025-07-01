@@ -40,7 +40,7 @@ app.use(passport.initialize());
 app.use("/api", productRoutes);
 app.use("/api", dishTypeRoutes);
 app.use("/api", foodRoutes);
-app.use("/api/user", userRoutes);
+app.use("/api/users", userRoutes);
 
 app.get("/", (req, res) => {
   res.send("Welcome to the Product API with Auth");
