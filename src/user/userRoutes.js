@@ -1,19 +1,28 @@
-// user/userRoutes.js
+// user/routes/userRoutes.js
 import express from "express";
-import {
-  register,
-  login,
-  logout,
-  getProfile,
-} from "./userController.js";
-import { protect } from "./authMiddleware.js";
+import * as userController from "./userController.js";
+import * as authMiddleware from "./authMiddleware.js";
 
 const router = express.Router();
 
-router.post("/register", register);
-router.post("/login", login);
-router.post("/logout", logout);
+// Public routes for authentication
+router.post("/register", userController.register);
+router.post("/login", userController.login);
+router.get("/logout", userController.logout);
 
-router.get("/me", protect, getProfile); // Protected route
+// Protected route to fetch current user profile
+router.get(
+  "/fetchUserProfile",
+  authMiddleware.protect,
+  userController.getProfile
+);
+
+// Admin-only route to fetch all users
+router.get(
+  "/allUsers",
+  authMiddleware.protect, // First, ensure user is authenticated
+  authMiddleware.restrictTo("admin"), // Then, ensure user has 'admin' role
+  userController.getAllUsers
+);
 
 export default router;
