@@ -9,11 +9,11 @@ import {
 
 const router = express.Router();
 
-router.get("/dish-types", getAllDishTypes);
-router.post("/dish-types", createDishType);
+router.get("/dishTypes", getAllDishTypes);
+router.post("/dishTypes", createDishType);
 
 // 🆕 Add these:
-router.put("/dish-types/:id", updateDishType);
-router.delete("/dish-types/:id", deleteDishType);
+router.put("/dishTypes/:id", updateDishType);
+router.delete("/dishTypes/:id", deleteDishType);
 
 export default router;
