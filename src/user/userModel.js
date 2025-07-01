@@ -1,4 +1,4 @@
-// user/userModel.js
+// src/user/userModel.js
 import mongoose from "mongoose";
 import bcrypt from "bcryptjs";
 
@@ -18,6 +18,12 @@ const userSchema = new mongoose.Schema(
       type: String,
       required: true,
       minlength: 6,
+      select: false,
+    },
+    role: {
+      type: String,
+      enum: ["user", "admin"],
+      default: "user",
     },
   },
   { timestamps: true }
