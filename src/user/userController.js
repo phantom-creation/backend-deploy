@@ -10,8 +10,8 @@ const sendToken = (user, res) => {
 
   res.cookie("token", token, {
     httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "Lax",
+    secure: true,
+    sameSite: "None",
     maxAge: 7 * 24 * 60 * 60 * 1000,
   });
 
@@ -32,7 +32,9 @@ export const register = async (req, res) => {
     const { fullName, email, password } = req.body;
     const exists = await User.findOne({ email });
     if (exists)
-      return res.status(400).json({ success: false, message: "Email already in use" });
+      return res
+        .status(400)
+        .json({ success: false, message: "Email already in use" });
 
     const user = await User.create({ fullName, email, password });
     sendToken(user, res);
@@ -75,7 +77,9 @@ export const getProfile = async (req, res) => {
   try {
     const user = await User.findById(req.user.id).select("-password");
     if (!user)
-      return res.status(404).json({ success: false, message: "User not found" });
+      return res
+        .status(404)
+        .json({ success: false, message: "User not found" });
 
     res.status(200).json({ success: true, user });
   } catch (err) {
