@@ -78,7 +78,6 @@ export const getProfile = async (req, res) => {
       return res
         .status(404)
         .json({ success: false, message: "User not found" });
-
     res.status(200).json({ success: true, user });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });

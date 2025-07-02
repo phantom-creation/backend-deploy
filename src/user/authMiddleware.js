@@ -14,6 +14,13 @@ export const protect = async (req, res, next) => {
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
+    if (!decoded){
+      return res.status(401).json({
+        success: false,
+        message: "Invalid token. Please log in again.",
+      });
+    }
+
     const currentUser = await User.findById(decoded.id);
     if (!currentUser)
       return res.status(401).json({
