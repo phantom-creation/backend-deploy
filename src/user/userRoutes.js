@@ -11,13 +11,15 @@ import { protect, restrictTo } from "./authMiddleware.js";
 
 const router = express.Router();
 
+// Authentication routes
 router.post("/register", register);
 router.post("/login", login);
-router.get("/logout", logout);
+router.post("/logout", logout); // Changed to POST for security
 
-router.get("/fetchUserProfile", protect, getProfile);
+// User profile routes
+router.get("/profile", protect, getProfile); // Simplified route name
 
-// Admin-only route
-router.get("/allUsers", protect, restrictTo("admin"), getAllUsers);
+// Admin-only routes
+router.get("/", protect, restrictTo("admin"), getAllUsers); // RESTful: GET /users for all users
 
 export default router;
