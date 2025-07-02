@@ -10,8 +10,8 @@ const sendToken = (user, res) => {
 
   res.cookie("token", token, {
     httpOnly: true,
-    secure: true,
-    sameSite: "None",
+    secure: true, // Always true for Vercel (HTTPS)
+    sameSite: "None", // Required for cross-origin cookies
     maxAge: 7 * 24 * 60 * 60 * 1000,
   });
 
@@ -30,6 +30,15 @@ const sendToken = (user, res) => {
 export const register = async (req, res) => {
   try {
     const { fullName, email, password } = req.body;
+    
+    // Add basic validation
+    if (!fullName || !email || !password) {
+      return res.status(400).json({ 
+        success: false, 
+        message: "Please provide all required fields" 
+      });
+    }
+
     const exists = await User.findOne({ email });
     if (exists)
       return res
@@ -48,6 +57,14 @@ export const login = async (req, res) => {
   try {
     const { email, password } = req.body;
 
+    // Add basic validation
+    if (!email || !password) {
+      return res.status(400).json({ 
+        success: false, 
+        message: "Please provide email and password" 
+      });
+    }
+
     const user = await User.findOne({ email }).select("+password");
     if (!user || !(await user.comparePassword(password))) {
       return res.status(400).json({
@@ -62,10 +79,12 @@ export const login = async (req, res) => {
   }
 };
 
-// Logout
+// Logout - Fixed cookie clearing
 export const logout = (req, res) => {
   res.clearCookie("token", {
     httpOnly: true,
+    secure: true,
+    sameSite: "None",
   });
   res.status(200).json({ success: true, message: "Logged out successfully" });
 };
