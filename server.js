@@ -44,11 +44,9 @@ app.get("/", (req, res) => {
   res.send("Welcome to the Product API with Auth");
 });
 
-// Connect to MongoDB
-connectDb();
-
 // Start Server
 const PORT = process.env.PORT || 3001;
 app.listen(PORT, () => {
+  connectDb();
   console.log(`🚀 Server running on port ${PORT}`);
 });
