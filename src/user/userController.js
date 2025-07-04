@@ -20,7 +20,7 @@ const sendToken = (user, res) => {
       id: user._id,
       fullName: user.fullName,
       email: user.email,
-      mobile: user.mobile,
+      phoneNumber: user.phoneNumber,
       role: user.role,
     },
   });
