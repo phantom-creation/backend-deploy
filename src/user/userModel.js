@@ -2,14 +2,17 @@
 import mongoose from "mongoose";
 import bcrypt from "bcryptjs";
 
-const addressSchema = new mongoose.Schema({
-  label: { type: String, default: "Home" }, // e.g., Home, Work, Other
-  street: String,
-  city: String,
-  state: String,
-  pincode: String,
-  country: { type: String, default: "India" },
-}, { _id: true }); // Ensure each address has its own ID
+const addressSchema = new mongoose.Schema(
+  {
+    label: { type: String, default: "Home" }, // e.g., Home, Work, Other
+    street: String,
+    city: String,
+    state: String,
+    pincode: String,
+    country: { type: String, default: "India" },
+  },
+  { _id: true }
+); // Ensure each address has its own ID
 
 const userSchema = new mongoose.Schema(
   {
@@ -24,8 +27,8 @@ const userSchema = new mongoose.Schema(
       lowercase: true,
     },
     mobile: {
-      type: String,
-      maxlength: 15,
+      type: Number,
+      maxlength: 10,
     },
     password: {
       type: String,
