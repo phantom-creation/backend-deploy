@@ -95,3 +95,21 @@ export const getAllUsers = async (req, res) => {
     res.status(500).json({ success: false, message: err.message });
   }
 };
+
+// Update Profile
+export const updateProfile = async (req, res) => {
+  try {
+    const { fullName, mobileNumber } = req.body;
+
+    const updatedUser = await User.findByIdAndUpdate(
+      req.user._id,
+      { fullName, mobileNumber },
+      { new: true, runValidators: true }
+    ).select("-password");
+
+    res.status(200).json({ success: true, user: updatedUser });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+};
+

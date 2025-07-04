@@ -12,7 +12,6 @@ const router = express.Router();
 router.get("/dishTypes", getAllDishTypes);
 router.post("/dishTypes", createDishType);
 
-// 🆕 Add these:
 router.put("/dishTypes/:id", updateDishType);
 router.delete("/dishTypes/:id", deleteDishType);
 
