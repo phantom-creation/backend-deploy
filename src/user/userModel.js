@@ -10,6 +10,11 @@ const addressSchema = new mongoose.Schema(
       enum: ["Home", "Work", "Other"],
       default: "Home",
     },
+    houseNumber: {
+      type: String,
+      required: [true, "House number is required"],
+      trim: true,
+    },
     street: { type: String, required: true },
     city: { type: String, required: true },
     state: { type: String, required: true },
@@ -21,12 +26,6 @@ const addressSchema = new mongoose.Schema(
     country: {
       type: String,
       default: "India",
-    },
-    latitude: {
-      type: Number,
-    },
-    longitude: {
-      type: Number,
     },
   },
   { _id: true }
