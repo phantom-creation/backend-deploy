@@ -1,4 +1,3 @@
-// src/user/userRoutes.js
 import express from "express";
 import {
   register,
@@ -11,33 +10,29 @@ import {
 
 import {
   addAddress,
+  getAddresses,
   updateAddress,
   deleteAddress,
-} from "./addressController.js";
+} from "./userAddressController.js";
 
 import { protect, restrictTo } from "./authMiddleware.js";
 
 const router = express.Router();
 
-
-// AUTH ROUTES
+// Auth
 router.post("/register", register);
 router.post("/login", login);
-router.post("/logout", logout); // POST for security
+router.post("/logout", logout);
 
-
-// USER PROFILE ROUTES
+// User profile
 router.get("/profile", protect, getProfile);
 router.put("/profile", protect, updateProfile);
+router.get("/", protect, restrictTo("admin"), getAllUsers);
 
-
-// ADDRESS ROUTES (Protected)
+// Address CRUD
+router.get("/addresses", protect, getAddresses);
 router.post("/address", protect, addAddress);
-router.put("/address/:addressId", protect, updateAddress);
-router.delete("/address/:addressId", protect, deleteAddress);
-
-
-// ADMIN ROUTES
-router.get("/", protect, restrictTo("admin"), getAllUsers); // GET /users for admin
+router.put("/address/:id", protect, updateAddress);
+router.delete("/address/:id", protect, deleteAddress);
 
 export default router;
