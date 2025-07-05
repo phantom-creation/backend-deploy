@@ -1,51 +1,47 @@
-// src/user/authMiddleware.js
 import jwt from "jsonwebtoken";
 import User from "./userModel.js";
 
+// Middleware: protect route
 export const protect = async (req, res, next) => {
   try {
     const token = req.cookies?.token;
-
-    if (!token)
+    if (!token) {
       return res.status(401).json({
         success: false,
-        message: "You are not logged in! Please log in to get access.",
-      });
-
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-
-    if (!decoded){
-      return res.status(401).json({
-        success: false,
-        message: "Invalid token. Please log in again.",
+        message: "Unauthorized. Token not found.",
       });
     }
 
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
     const currentUser = await User.findById(decoded.id);
-    if (!currentUser)
+
+    if (!currentUser) {
       return res.status(401).json({
         success: false,
-        message: "User no longer exists.",
+        message: "User not found or token invalid.",
       });
+    }
 
     req.user = currentUser;
     next();
   } catch (err) {
     res.status(401).json({
       success: false,
-      message: err.name === "TokenExpiredError"
-        ? "Token expired. Please log in again."
-        : "Invalid token. Please log in again.",
+      message:
+        err.name === "TokenExpiredError"
+          ? "Session expired. Please log in again."
+          : "Unauthorized access.",
     });
   }
 };
 
+// Middleware: restrict to specific roles
 export const restrictTo = (...roles) => {
   return (req, res, next) => {
     if (!roles.includes(req.user.role)) {
       return res.status(403).json({
         success: false,
-        message: "You do not have permission to perform this action.",
+        message: "You do not have permission for this action.",
       });
     }
     next();

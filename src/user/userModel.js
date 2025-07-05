@@ -2,39 +2,60 @@
 import mongoose from "mongoose";
 import bcrypt from "bcryptjs";
 
+// Address Schema
 const addressSchema = new mongoose.Schema(
   {
-    label: { type: String, default: "Home" }, // e.g., Home, Work, Other
-    street: String,
-    city: String,
-    state: String,
-    pincode: String,
-    country: { type: String, default: "India" },
+    label: {
+      type: String,
+      enum: ["Home", "Work", "Other"],
+      default: "Home",
+    },
+    street: { type: String, required: true },
+    city: { type: String, required: true },
+    state: { type: String, required: true },
+    pincode: {
+      type: String,
+      required: true,
+      match: [/^\d{6}$/, "Pincode must be 6 digits"],
+    },
+    country: {
+      type: String,
+      default: "India",
+    },
+    latitude: {
+      type: Number,
+    },
+    longitude: {
+      type: Number,
+    },
   },
   { _id: true }
-); // Ensure each address has its own ID
+);
 
+// User Schema
 const userSchema = new mongoose.Schema(
   {
     fullName: {
       type: String,
-      required: true,
+      required: [true, "Full name is required"],
+      trim: true,
     },
     email: {
       type: String,
-      required: true,
+      required: [true, "Email is required"],
       unique: true,
       lowercase: true,
+      match: [/.+@.+\..+/, "Please enter a valid email"],
     },
     phoneNumber: {
-      type: Number,
-      maxlength: 10,
+      type: String,
+      match: [/^\d{10}$/, "Phone number must be 10 digits"],
       default: null,
     },
     password: {
       type: String,
-      required: true,
-      minlength: 6,
+      required: [true, "Password is required"],
+      minlength: [6, "Password must be at least 6 characters"],
       select: false,
     },
     role: {

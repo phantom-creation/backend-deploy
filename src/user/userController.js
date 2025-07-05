@@ -9,8 +9,8 @@ const sendToken = (user, res) => {
 
   res.cookie("token", token, {
     httpOnly: true,
-    secure: true,
-    sameSite: "None",
+    secure: process.env.NODE_ENV === "production",
+    sameSite: process.env.NODE_ENV === "production" ? "None" : "Lax",
     maxAge: 7 * 24 * 60 * 60 * 1000,
   });
 
@@ -29,21 +29,28 @@ const sendToken = (user, res) => {
 // Register
 export const register = async (req, res) => {
   try {
-    const { fullName, email, password, mobile } = req.body;
+    const { fullName, email, password, phoneNumber } = req.body;
 
     if (!fullName || !email || !password) {
       return res
         .status(400)
-        .json({ success: false, message: "Missing fields" });
+        .json({ success: false, message: "Full name, email, and password are required." });
     }
 
-    const exists = await User.findOne({ email });
-    if (exists)
+    if (phoneNumber && !/^\d{10}$/.test(phoneNumber)) {
+      return res
+        .status(400)
+        .json({ success: false, message: "Phone number must be 10 digits." });
+    }
+
+    const existingUser = await User.findOne({ email });
+    if (existingUser) {
       return res
         .status(400)
         .json({ success: false, message: "Email already in use" });
+    }
 
-    const user = await User.create({ fullName, email, password, mobile });
+    const user = await User.create({ fullName, email, password, phoneNumber });
     sendToken(user, res);
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
@@ -58,15 +65,13 @@ export const login = async (req, res) => {
     if (!email || !password)
       return res
         .status(400)
-        .json({ success: false, message: "Missing credentials" });
+        .json({ success: false, message: "Email and password are required" });
 
     const user = await User.findOne({ email }).select("+password");
-
     if (!user || !(await user.comparePassword(password))) {
-      return res.status(400).json({
-        success: false,
-        message: "Invalid email or password",
-      });
+      return res
+        .status(401)
+        .json({ success: false, message: "Invalid email or password" });
     }
 
     sendToken(user, res);
@@ -91,9 +96,7 @@ export const getProfile = async (req, res) => {
   try {
     const user = await User.findById(req.user.id).select("-password");
     if (!user)
-      return res
-        .status(404)
-        .json({ success: false, message: "User not found" });
+      return res.status(404).json({ success: false, message: "User not found" });
 
     res.status(200).json({ success: true, user });
   } catch (err) {
@@ -114,15 +117,18 @@ export const getAllUsers = async (req, res) => {
 // Update Profile
 export const updateProfile = async (req, res) => {
   try {
-    const { fullName, mobile } = req.body;
+    const { fullName, phoneNumber } = req.body;
 
-    if (!fullName || !/^\d{10}$/.test(mobile)) {
-      return res.status(400).json({ success: false, message: "Invalid input" });
+    if (!fullName || !/^\d{10}$/.test(phoneNumber)) {
+      return res.status(400).json({
+        success: false,
+        message: "Full name and a valid 10-digit phone number are required.",
+      });
     }
 
     const updatedUser = await User.findByIdAndUpdate(
       req.user.id,
-      { fullName, mobile },
+      { fullName, phoneNumber },
       { new: true, runValidators: true }
     ).select("-password");
 

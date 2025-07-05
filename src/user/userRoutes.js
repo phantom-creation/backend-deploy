@@ -8,21 +8,36 @@ import {
   getAllUsers,
   updateProfile,
 } from "./userController.js";
+
+import {
+  addAddress,
+  updateAddress,
+  deleteAddress,
+} from "./addressController.js";
+
 import { protect, restrictTo } from "./authMiddleware.js";
 
 const router = express.Router();
 
-// Authentication routes
+
+// AUTH ROUTES
 router.post("/register", register);
 router.post("/login", login);
-router.post("/logout", logout); // Changed to POST for security
+router.post("/logout", logout); // POST for security
 
-// User profile routes
+
+// USER PROFILE ROUTES
 router.get("/profile", protect, getProfile);
-// Update profile route
 router.put("/profile", protect, updateProfile);
 
-// Admin-only routes
-router.get("/", protect, restrictTo("admin"), getAllUsers); // RESTful: GET /users for all users
+
+// ADDRESS ROUTES (Protected)
+router.post("/address", protect, addAddress);
+router.put("/address/:addressId", protect, updateAddress);
+router.delete("/address/:addressId", protect, deleteAddress);
+
+
+// ADMIN ROUTES
+router.get("/", protect, restrictTo("admin"), getAllUsers); // GET /users for admin
 
 export default router;
