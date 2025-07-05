@@ -16,8 +16,9 @@ const app = express();
 
 // Middleware
 const allowedOrigins = [
-  "http://localhost:5173", // ✅ Dev frontend
-  "https://your-frontend.vercel.app", // 🔁 Add your production URL here later
+  "http://localhost:5173",
+  "https://your-frontend.vercel.app",
+  "*",
 ];
 
 app.use(
