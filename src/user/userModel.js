@@ -27,6 +27,14 @@ const addressSchema = new mongoose.Schema(
       type: String,
       default: "India",
     },
+    latitude: {
+      type: Number,
+      default: null,
+    },
+    longitude: {
+      type: Number,
+      default: null,
+    },
   },
   { _id: true }
 );
