@@ -32,7 +32,7 @@ router.get("/", protect, restrictTo("admin"), getAllUsers);
 // Address CRUD
 router.get("/addresses", protect, getAddresses);
 router.post("/address", protect, addAddress);
-router.put("/address/:id", protect, updateAddress);
-router.delete("/address/:id", protect, deleteAddress);
+router.delete("/address/:addressId", protect, deleteAddress);
+router.put("/address/:addressId", protect, updateAddress);
 
 export default router;
