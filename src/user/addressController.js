@@ -16,6 +16,27 @@ export const addAddress = async (req, res) => {
   }
 };
 
+// Get all addresses of the logged-in user
+export const getAddresses = async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id);
+
+    if (!user) {
+      return res
+        .status(404)
+        .json({ success: false, message: "User not found" });
+    }
+
+    res.status(200).json({
+      success: true,
+      addresses: user.addresses || [],
+    });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+};
+
+
 // Update address
 export const updateAddress = async (req, res) => {
   try {

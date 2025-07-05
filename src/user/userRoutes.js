@@ -13,7 +13,7 @@ import {
   getAddresses,
   updateAddress,
   deleteAddress,
-} from "./userAddressController.js";
+} from "./addressController.js";
 
 import { protect, restrictTo } from "./authMiddleware.js";
 
