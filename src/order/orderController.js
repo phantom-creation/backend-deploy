@@ -1,6 +1,6 @@
 // src/order/orderController.js
-import Order from "./orderModel.js";
-import Food from "../food/foodModel.js";
+import {Order} from "./orderModel.js";
+import {Food} from "../food/foodModel.js";
 
 export const placeOrder = async (req, res) => {
   try {

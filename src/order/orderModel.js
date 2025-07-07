@@ -3,11 +3,19 @@ import mongoose from "mongoose";
 
 const orderSchema = new mongoose.Schema(
   {
-    userId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
+    userId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+    },
 
     foodItems: [
       {
-        foodId: { type: mongoose.Schema.Types.ObjectId, ref: "Food", required: true },
+        foodId: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: "Food",
+          required: true,
+        },
         size: { type: String }, // optional
         quantity: { type: Number, required: true },
         selectedAddons: [
@@ -35,11 +43,17 @@ const orderSchema = new mongoose.Schema(
 
     orderStatus: {
       type: String,
-      enum: ["placed", "preparing", "out-for-delivery", "delivered", "cancelled"],
+      enum: [
+        "placed",
+        "preparing",
+        "out-for-delivery",
+        "delivered",
+        "cancelled",
+      ],
       default: "placed",
     },
   },
   { timestamps: true }
 );
 
-export default mongoose.model("Order", orderSchema);
+export const Order = mongoose.model("Order", orderSchema);
