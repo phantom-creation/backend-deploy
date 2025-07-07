@@ -1,6 +1,6 @@
 // src/order/orderController.js
-import {Order} from "./orderModel.js";
-import {Food} from "../food/foodModel.js";
+import { Order } from "./orderModel.js";
+import { Food } from "../food/foodModel.js";
 
 export const placeOrder = async (req, res) => {
   try {
@@ -8,7 +8,9 @@ export const placeOrder = async (req, res) => {
     const { foodItems, paymentMethod } = req.body;
 
     if (!foodItems || !foodItems.length) {
-      return res.status(400).json({ success: false, message: "No food items provided" });
+      return res
+        .status(400)
+        .json({ success: false, message: "No food items provided" });
     }
 
     let total = 0;
@@ -16,7 +18,9 @@ export const placeOrder = async (req, res) => {
     for (const item of foodItems) {
       const food = await Food.findById(item.foodId);
       if (!food) {
-        return res.status(404).json({ success: false, message: "Food not found" });
+        return res
+          .status(404)
+          .json({ success: false, message: "Food not found" });
       }
 
       let basePrice = food.isSizeBased
@@ -24,10 +28,13 @@ export const placeOrder = async (req, res) => {
         : food.price;
 
       if (basePrice === undefined) {
-        return res.status(400).json({ success: false, message: "Invalid size/price" });
+        return res
+          .status(400)
+          .json({ success: false, message: "Invalid size/price" });
       }
 
-      let addonsTotal = item.selectedAddons?.reduce((sum, a) => sum + a.price, 0) || 0;
+      let addonsTotal =
+        item.selectedAddons?.reduce((sum, a) => sum + a.price, 0) || 0;
 
       total += (basePrice + addonsTotal) * item.quantity;
     }
@@ -48,12 +55,14 @@ export const placeOrder = async (req, res) => {
   }
 };
 
+// Get all orders for a user
 export const getUserOrders = async (req, res) => {
   try {
     const userId = req.user._id;
 
     const orders = await Order.find({ userId })
       .sort({ createdAt: -1 })
+      .populate("foodItems.foodId") // ✅ populate food details
       .lean();
 
     res.status(200).json(orders);
