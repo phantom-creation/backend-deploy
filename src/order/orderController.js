@@ -1,5 +1,5 @@
-import Order from "../models/orderModel.js";
-import User from "../models/userModel.js";
+import Order from "../order/orderModel.js";
+import User from "../user/userModel.js";
 
 export const placeOrder = async (req, res) => {
   try {
@@ -14,15 +14,22 @@ export const placeOrder = async (req, res) => {
     } = req.body;
 
     if (!items || !items.length) {
-      return res.status(400).json({ success: false, message: "No items in order" });
+      return res
+        .status(400)
+        .json({ success: false, message: "No items in order" });
     }
 
     const user = await User.findById(req.user.id);
-    if (!user) return res.status(404).json({ success: false, message: "User not found" });
+    if (!user)
+      return res
+        .status(404)
+        .json({ success: false, message: "User not found" });
 
     const address = user.addresses.id(addressId);
     if (!address) {
-      return res.status(404).json({ success: false, message: "Address not found" });
+      return res
+        .status(404)
+        .json({ success: false, message: "Address not found" });
     }
 
     const order = new Order({
