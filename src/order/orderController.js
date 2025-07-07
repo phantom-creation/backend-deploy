@@ -1,75 +1,49 @@
-import mongoose from "mongoose";
+// src/order/orderController.js
 import Order from "./orderModel.js";
-import User from "../user/userModel.js";
+import Food from "../food/foodModel.js";
 
-// ✅ PLACE ORDER
 export const placeOrder = async (req, res) => {
   try {
-    const {
-      items,
-      addressId,
-      subtotal,
-      restaurantCharge,
-      deliveryFee,
-      total,
-      paymentMethod,
-    } = req.body;
+    const userId = req.user.id;
+    const { foodItems, paymentMethod } = req.body;
 
-    if (!items || !items.length) {
-      return res
-        .status(400)
-        .json({ success: false, message: "No items in order" });
+    if (!foodItems || !foodItems.length) {
+      return res.status(400).json({ success: false, message: "No food items provided" });
     }
 
-    const user = await User.findById(req.user.id);
-    if (!user) {
-      return res
-        .status(404)
-        .json({ success: false, message: "User not found" });
-    }
+    let total = 0;
 
-    const address = user.addresses.id(addressId);
-    if (!address) {
-      return res
-        .status(404)
-        .json({ success: false, message: "Address not found" });
-    }
+    for (const item of foodItems) {
+      const food = await Food.findById(item.foodId);
+      if (!food) {
+        return res.status(404).json({ success: false, message: "Food not found" });
+      }
 
-    // ✅ Ensure `food` field is ObjectId for each item
-    const formattedItems = items.map((item) => ({
-      ...item,
-      food: new mongoose.Types.ObjectId(item.food),
-    }));
+      let basePrice = food.isSizeBased
+        ? food.priceOptions.find((opt) => opt.size === item.size)?.price
+        : food.price;
+
+      if (basePrice === undefined) {
+        return res.status(400).json({ success: false, message: "Invalid size/price" });
+      }
+
+      let addonsTotal = item.selectedAddons?.reduce((sum, a) => sum + a.price, 0) || 0;
+
+      total += (basePrice + addonsTotal) * item.quantity;
+    }
 
     const order = new Order({
-      user: user._id,
-      items: formattedItems,
-      address,
-      subtotal,
-      restaurantCharge,
-      deliveryFee,
-      total,
+      userId,
+      foodItems,
+      totalPrice: parseFloat(total.toFixed(2)),
       paymentMethod,
+      paymentStatus: paymentMethod === "online" ? "pending" : "paid",
     });
 
     await order.save();
 
     res.status(201).json({ success: true, message: "Order placed", order });
   } catch (err) {
-    console.error("🚨 Order Error:", err);
-    res.status(500).json({ success: false, message: err.message });
-  }
-};
-
-export const getOrders = async (req, res) => {
-  try {
-    const orders = await Order.find({ user: req.user.id }).sort({
-      createdAt: -1,
-    });
-
-    res.status(200).json({ success: true, orders });
-  } catch (err) {
-    console.error("🚨 Fetch Orders Error:", err);
     res.status(500).json({ success: false, message: err.message });
   }
 };
