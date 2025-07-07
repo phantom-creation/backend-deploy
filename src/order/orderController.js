@@ -47,3 +47,18 @@ export const placeOrder = async (req, res) => {
     res.status(500).json({ success: false, message: err.message });
   }
 };
+
+export const getUserOrders = async (req, res) => {
+  try {
+    const userId = req.user._id;
+
+    const orders = await Order.find({ userId })
+      .sort({ createdAt: -1 })
+      .lean();
+
+    res.status(200).json(orders);
+  } catch (err) {
+    console.error("Get User Orders Error:", err);
+    res.status(500).json({ message: "Failed to fetch orders" });
+  }
+};
