@@ -9,6 +9,7 @@ import productRoutes from "./src/product/productRoutes.js";
 import dishTypeRoutes from "./src/dishType/dishTypeRoutes.js";
 import foodRoutes from "./src/food/foodRoutes.js";
 import userRoutes from "./src/user/userRoutes.js";
+import orderRoutes from "./src/order/orderRoutes.js";
 
 dotenv.config();
 
@@ -42,6 +43,7 @@ app.use("/api", productRoutes);
 app.use("/api", dishTypeRoutes);
 app.use("/api", foodRoutes);
 app.use("/api/users", userRoutes);
+app.use("/api/orders", orderRoutes);
 
 app.get("/", (req, res) => {
   res.send("Welcome to the Product API with Auth");
