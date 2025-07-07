@@ -1,5 +1,8 @@
 import mongoose from "mongoose";
+import Order from "./orderModel.js";
+import User from "../user/userModel.js";
 
+// ✅ PLACE ORDER
 export const placeOrder = async (req, res) => {
   try {
     const {
@@ -32,7 +35,7 @@ export const placeOrder = async (req, res) => {
         .json({ success: false, message: "Address not found" });
     }
 
-    // ✅ Convert item.food from string → ObjectId
+    // ✅ Ensure `food` field is ObjectId for each item
     const formattedItems = items.map((item) => ({
       ...item,
       food: new mongoose.Types.ObjectId(item.food),
@@ -54,6 +57,19 @@ export const placeOrder = async (req, res) => {
     res.status(201).json({ success: true, message: "Order placed", order });
   } catch (err) {
     console.error("🚨 Order Error:", err);
+    res.status(500).json({ success: false, message: err.message });
+  }
+};
+
+export const getOrders = async (req, res) => {
+  try {
+    const orders = await Order.find({ user: req.user.id }).sort({
+      createdAt: -1,
+    });
+
+    res.status(200).json({ success: true, orders });
+  } catch (err) {
+    console.error("🚨 Fetch Orders Error:", err);
     res.status(500).json({ success: false, message: err.message });
   }
 };
