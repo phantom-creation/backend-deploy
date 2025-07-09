@@ -11,16 +11,16 @@ import dishTypeRoutes from "./src/dishType/dishTypeRoutes.js";
 import foodRoutes from "./src/food/foodRoutes.js";
 import userRoutes from "./src/user/userRoutes.js";
 import orderRoutes from "./src/order/orderRoutes.js";
+import paymentRoutes from "./src/payment/paymentRoutes.js"; // ✅ import
 
 dotenv.config();
 
 const app = express();
 
-// Middleware
+// ✅ Allow frontend during dev
 const allowedOrigins = [
   "http://localhost:5173",
   "https://your-frontend.vercel.app",
-  "*",
 ];
 
 app.use(
@@ -35,28 +35,30 @@ app.use(
     credentials: true,
   })
 );
+
+// ✅ Webhook route requires raw body BEFORE express.json()
+app.use("/api/payment/webhook", bodyParser.raw({ type: "application/json" }));
+
+// ✅ Other middleware
 app.use(express.json());
 app.use(cookieParser());
 app.use(passport.initialize());
 
-// Routes
+// ✅ Routes
 app.use("/api", productRoutes);
 app.use("/api", dishTypeRoutes);
 app.use("/api", foodRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/orders", orderRoutes);
-app.use("/api/payment/webhook", bodyParser.raw({ type: "application/json" }));
-
+app.use("/api/payment", paymentRoutes); // ✅ create-checkout-session works now
 
 app.get("/", (req, res) => {
-  res.send("Welcome to the Product API with Auth");
+  res.send("Server is running");
 });
 
-// Connect to MongoDB
 connectDb();
 
-// Start Server
-const PORT = process.env.PORT || 3001;
+const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
-  console.log(`🚀 Server running on port ${PORT}`);
+  console.log(`🚀 Server running at http://localhost:${PORT}`);
 });
