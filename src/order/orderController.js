@@ -87,3 +87,25 @@ export const getAllOrders = async (req, res) => {
     res.status(500).json({ message: "Failed to fetch all orders" });
   }
 };
+
+// Update order status or payment status
+export const updateOrderStatus = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { orderStatus, paymentStatus } = req.body;
+
+    const order = await Order.findById(id);
+    if (!order) {
+      return res.status(404).json({ success: false, message: "Order not found" });
+    }
+
+    if (orderStatus) order.orderStatus = orderStatus;
+    if (paymentStatus) order.paymentStatus = paymentStatus;
+
+    await order.save();
+
+    res.status(200).json({ success: true, message: "Order updated", order });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+};
