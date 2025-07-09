@@ -1,6 +1,6 @@
 // src/order/orderRoutes.js
 import express from "express";
-import { placeOrder, getUserOrders } from "./orderController.js";
+import { placeOrder, getUserOrders, getAllOrders } from "./orderController.js";
 import { isAdmin, protect } from "../user/authMiddleware.js";
 
 const router = express.Router();

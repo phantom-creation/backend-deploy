@@ -71,3 +71,19 @@ export const getUserOrders = async (req, res) => {
     res.status(500).json({ message: "Failed to fetch orders" });
   }
 };
+
+// Get all orders for admin
+export const getAllOrders = async (req, res) => {
+  try {
+    const orders = await Order.find()
+      .sort({ createdAt: -1 })
+      .populate("userId", "fullName email") // Show basic user info
+      .populate("foodItems.foodId") // Include food details
+      .lean();
+
+    res.status(200).json({ success: true, orders });
+  } catch (err) {
+    console.error("Admin Get Orders Error:", err);
+    res.status(500).json({ message: "Failed to fetch all orders" });
+  }
+};
