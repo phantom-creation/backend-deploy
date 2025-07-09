@@ -1,4 +1,3 @@
-// src/order/orderModel.js
 import mongoose from "mongoose";
 
 const orderSchema = new mongoose.Schema(
@@ -27,7 +26,10 @@ const orderSchema = new mongoose.Schema(
       },
     ],
 
-    totalPrice: { type: Number, required: true },
+    totalPrice: {
+      type: Number,
+      required: true,
+    },
 
     paymentMethod: {
       type: String,
@@ -51,6 +53,11 @@ const orderSchema = new mongoose.Schema(
         "cancelled",
       ],
       default: "placed",
+    },
+
+    paymentSessionId: {
+      type: String,
+      default: null,
     },
   },
   { timestamps: true }

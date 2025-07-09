@@ -3,6 +3,7 @@ import cors from "cors";
 import dotenv from "dotenv";
 import cookieParser from "cookie-parser";
 import passport from "passport";
+import bodyParser from "body-parser";
 
 import connectDb from "./src/config/dbConfig.js";
 import productRoutes from "./src/product/productRoutes.js";
@@ -44,6 +45,8 @@ app.use("/api", dishTypeRoutes);
 app.use("/api", foodRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/orders", orderRoutes);
+app.use("/api/payment/webhook", bodyParser.raw({ type: "application/json" }));
+
 
 app.get("/", (req, res) => {
   res.send("Welcome to the Product API with Auth");
