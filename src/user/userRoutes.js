@@ -15,7 +15,7 @@ import {
   deleteAddress,
 } from "./addressController.js";
 
-import { protect, restrictTo } from "./authMiddleware.js";
+import { isAdmin, protect } from "./authMiddleware.js";
 
 const router = express.Router();
 
@@ -27,7 +27,7 @@ router.post("/logout", logout);
 // User profile
 router.get("/profile", protect, getProfile);
 router.put("/profile", protect, updateProfile);
-router.get("/", protect, restrictTo("admin"), getAllUsers);
+router.get("/all", protect, isAdmin, getAllUsers);
 
 // Address CRUD
 router.get("/addresses", protect, getAddresses);

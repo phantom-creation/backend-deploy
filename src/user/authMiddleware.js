@@ -35,18 +35,6 @@ export const protect = async (req, res, next) => {
   }
 };
 
-// Middleware: restrict to specific roles
-export const restrictTo = (...roles) => {
-  return (req, res, next) => {
-    if (!roles.includes(req.user.role)) {
-      return res.status(403).json({
-        success: false,
-        message: "You do not have permission for this action.",
-      });
-    }
-    next();
-  };
-};
 
 export const isAdmin = (req, res, next) => {
   if (req.user && req.user.role === "admin") {
