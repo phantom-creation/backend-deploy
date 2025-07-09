@@ -3,16 +3,24 @@ import { Order } from "../order/orderModel.js";
 
 export const createCheckoutSession = async (req, res) => {
   try {
-    const { userId, foodItems, totalPrice } = req.body;
+    const { userId, foodItems, totalPrice, paymentMethod, addressId } =
+      req.body;
 
     const order = await Order.create({
       userId,
       foodItems,
       totalPrice,
-      paymentMethod: "online",
-      paymentStatus: "pending",
+      paymentMethod,
+      addressId,
+      paymentStatus: paymentMethod === "cod" ? "pending" : "pending",
+      orderStatus: "placed",
     });
 
+    if (paymentMethod === "cod") {
+      return res.status(200).json({ message: "Order placed successfully" });
+    }
+
+    // For online payment (Stripe)
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ["card"],
       mode: "payment",
@@ -20,9 +28,7 @@ export const createCheckoutSession = async (req, res) => {
         {
           price_data: {
             currency: "inr",
-            product_data: {
-              name: "Restaurant Order",
-            },
+            product_data: { name: "Restaurant Order" },
             unit_amount: totalPrice * 100,
           },
           quantity: 1,
@@ -40,9 +46,9 @@ export const createCheckoutSession = async (req, res) => {
     await order.save();
 
     res.status(200).json({ url: session.url });
-  } catch (error) {
-    console.error("Stripe session error:", error.message);
-    res.status(500).json({ error: error.message });
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).json({ message: "Payment initiation failed" });
   }
 };
 
@@ -57,22 +63,16 @@ export const handleStripeWebhook = async (req, res) => {
       process.env.STRIPE_WEBHOOK_SECRET
     );
   } catch (err) {
-    console.error("Webhook signature verification failed:", err.message);
     return res.status(400).send(`Webhook Error: ${err.message}`);
   }
 
   if (event.type === "checkout.session.completed") {
     const session = event.data.object;
-    const orderId = session.metadata?.orderId;
+    const orderId = session.metadata.orderId;
 
-    try {
-      await Order.findByIdAndUpdate(orderId, {
-        paymentStatus: "paid",
-      });
-      console.log(`✅ Order ${orderId} marked as paid.`);
-    } catch (err) {
-      console.error("❌ Failed to update order:", err.message);
-    }
+    await Order.findByIdAndUpdate(orderId, {
+      paymentStatus: "paid",
+    });
   }
 
   res.status(200).json({ received: true });
