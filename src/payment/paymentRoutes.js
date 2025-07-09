@@ -6,10 +6,9 @@ import {
 
 const router = express.Router();
 
-// Normal routes
 router.post("/create-checkout-session", createCheckoutSession);
 
-// Stripe webhook — body must be raw JSON
-router.post("/webhook", express.raw({ type: "application/json" }), handleStripeWebhook);
+// Webhook — handled with raw body from middleware
+router.post("/webhook", handleStripeWebhook);
 
 export default router;

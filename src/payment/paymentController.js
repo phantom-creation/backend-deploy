@@ -3,8 +3,7 @@ import { Order } from "../order/orderModel.js";
 
 export const createCheckoutSession = async (req, res) => {
   try {
-    const { userId, foodItems, totalPrice, paymentMethod, addressId } =
-      req.body;
+    const { userId, foodItems, totalPrice, paymentMethod, addressId } = req.body;
 
     const order = await Order.create({
       userId,
@@ -17,10 +16,9 @@ export const createCheckoutSession = async (req, res) => {
     });
 
     if (paymentMethod === "cod") {
-      return res.status(200).json({ message: "Order placed successfully" });
+      return res.status(200).json({ message: "Order placed successfully", orderId: order._id });
     }
 
-    // For online payment (Stripe)
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ["card"],
       mode: "payment",
@@ -47,7 +45,7 @@ export const createCheckoutSession = async (req, res) => {
 
     res.status(200).json({ url: session.url });
   } catch (err) {
-    console.error(err.message);
+    console.error("Stripe Checkout Error:", err);
     res.status(500).json({ message: "Payment initiation failed" });
   }
 };
@@ -63,6 +61,7 @@ export const handleStripeWebhook = async (req, res) => {
       process.env.STRIPE_WEBHOOK_SECRET
     );
   } catch (err) {
+    console.error("Stripe Webhook Error:", err.message);
     return res.status(400).send(`Webhook Error: ${err.message}`);
   }
 
@@ -70,9 +69,14 @@ export const handleStripeWebhook = async (req, res) => {
     const session = event.data.object;
     const orderId = session.metadata.orderId;
 
-    await Order.findByIdAndUpdate(orderId, {
-      paymentStatus: "paid",
-    });
+    try {
+      await Order.findByIdAndUpdate(orderId, {
+        paymentStatus: "paid",
+      });
+      console.log("✅ Order marked as paid:", orderId);
+    } catch (err) {
+      console.error("❌ Error updating order:", err.message);
+    }
   }
 
   res.status(200).json({ received: true });
