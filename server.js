@@ -1,3 +1,4 @@
+// Corrected Express setup for your existing code
 import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
@@ -16,7 +17,7 @@ dotenv.config();
 
 const app = express();
 
-// Middleware
+// CORS setup
 const allowedOrigins = [
   "http://localhost:5173",
   "https://your-frontend.vercel.app",
@@ -36,7 +37,18 @@ app.use(
   })
 );
 
-app.use("/api/stripe", express.raw({ type: "application/json" }), stripeRoutes);
+// CRITICAL: Stripe webhook route MUST come BEFORE express.json() middleware
+// This line should be BEFORE app.use(express.json())
+app.use("/api/stripe", 
+  express.raw({ type: "application/json" }), 
+  (req, res, next) => {
+    req.rawBody = req.body; // Store raw body for stripe verification
+    next();
+  },
+  stripeRoutes
+);
+
+// JSON parsing middleware for all other routes
 app.use(express.json());
 app.use(cookieParser());
 app.use(passport.initialize());
