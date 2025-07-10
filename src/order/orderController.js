@@ -66,7 +66,9 @@ export const placeOrder = async (req, res) => {
     const { foodItems, paymentMethod, addressId } = req.body;
 
     if (!foodItems?.length) {
-      return res.status(400).json({ success: false, message: "No food items provided" });
+      return res
+        .status(400)
+        .json({ success: false, message: "No food items provided" });
     }
 
     let subtotal = 0;
@@ -75,7 +77,9 @@ export const placeOrder = async (req, res) => {
     for (const item of foodItems) {
       const food = await Food.findById(item.foodId);
       if (!food) {
-        return res.status(404).json({ success: false, message: "Food not found" });
+        return res
+          .status(404)
+          .json({ success: false, message: "Food not found" });
       }
 
       const basePrice = food.isSizeBased
@@ -83,7 +87,9 @@ export const placeOrder = async (req, res) => {
         : food.price;
 
       if (basePrice === undefined) {
-        return res.status(400).json({ success: false, message: "Invalid size/price" });
+        return res
+          .status(400)
+          .json({ success: false, message: "Invalid size/price" });
       }
 
       const addonsTotal =
@@ -147,7 +153,9 @@ export const placeOrder = async (req, res) => {
     });
 
     if (paymentMethod === "cod") {
-      return res.status(201).json({ success: true, message: "Order placed", order });
+      return res
+        .status(201)
+        .json({ success: true, message: "Order placed", order });
     }
 
     // Create Stripe session
@@ -208,6 +216,7 @@ export const getAllOrders = async (req, res) => {
       .sort({ createdAt: -1 })
       .populate("userId", "fullName email")
       .populate("foodItems.foodId")
+      .populate("addressId") // 👈 This adds the full address object
       .lean();
 
     res.status(200).json({ success: true, orders });
