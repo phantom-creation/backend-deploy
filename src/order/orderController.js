@@ -8,7 +8,9 @@ export const verifyStripePayment = async (req, res) => {
   const { sessionId } = req.body;
 
   if (!sessionId) {
-    return res.status(400).json({ success: false, message: "Session ID missing" });
+    return res
+      .status(400)
+      .json({ success: false, message: "Session ID missing" });
   }
 
   try {
@@ -16,7 +18,9 @@ export const verifyStripePayment = async (req, res) => {
 
     const orderId = session?.metadata?.orderId;
     if (!orderId) {
-      return res.status(400).json({ success: false, message: "Invalid session metadata" });
+      return res
+        .status(400)
+        .json({ success: false, message: "Invalid session metadata" });
     }
 
     if (session.payment_status === "paid") {
@@ -30,7 +34,9 @@ export const verifyStripePayment = async (req, res) => {
       );
 
       if (!updatedOrder) {
-        return res.status(404).json({ success: false, message: "Order not found" });
+        return res
+          .status(404)
+          .json({ success: false, message: "Order not found" });
       }
 
       return res.status(200).json({
@@ -40,10 +46,14 @@ export const verifyStripePayment = async (req, res) => {
       });
     }
 
-    return res.status(400).json({ success: false, message: "Payment not completed" });
+    return res
+      .status(400)
+      .json({ success: false, message: "Payment not completed" });
   } catch (err) {
     console.error("❌ Stripe Verification Error:", err);
-    return res.status(500).json({ success: false, message: "Payment verification failed" });
+    return res
+      .status(500)
+      .json({ success: false, message: "Payment verification failed" });
   }
 };
 
@@ -54,16 +64,20 @@ export const placeOrder = async (req, res) => {
     const { foodItems, paymentMethod, addressId } = req.body;
 
     if (!foodItems?.length) {
-      return res.status(400).json({ success: false, message: "No food items provided" });
+      return res
+        .status(400)
+        .json({ success: false, message: "No food items provided" });
     }
 
-    let total = 0;
+    let subtotal = 0;
     const lineItems = [];
 
     for (const item of foodItems) {
       const food = await Food.findById(item.foodId);
       if (!food) {
-        return res.status(404).json({ success: false, message: "Food not found" });
+        return res
+          .status(404)
+          .json({ success: false, message: "Food not found" });
       }
 
       const basePrice = food.isSizeBased
@@ -71,13 +85,15 @@ export const placeOrder = async (req, res) => {
         : food.price;
 
       if (basePrice === undefined) {
-        return res.status(400).json({ success: false, message: "Invalid size/price" });
+        return res
+          .status(400)
+          .json({ success: false, message: "Invalid size/price" });
       }
 
       const addonsTotal =
         item.selectedAddons?.reduce((sum, a) => sum + a.price, 0) || 0;
       const itemTotal = (basePrice + addonsTotal) * item.quantity;
-      total += itemTotal;
+      subtotal += itemTotal;
 
       lineItems.push({
         price_data: {
@@ -85,15 +101,47 @@ export const placeOrder = async (req, res) => {
           product_data: {
             name: food.name + (item.size ? ` (${item.size})` : ""),
           },
-          unit_amount: Math.round((basePrice + addonsTotal) * 100),
+          unit_amount: Math.round((basePrice + addonsTotal) * 100), // in paise
         },
         quantity: item.quantity,
       });
     }
 
+    // ✅ Backend charge calculation
+    const serviceFee = subtotal * 0.1;
+    const deliveryFee = subtotal + serviceFee >= 399 ? 0 : 25;
+    const total = subtotal + serviceFee + deliveryFee;
+
+    // Add service fee and delivery fee as Stripe line items
+    if (serviceFee > 0) {
+      lineItems.push({
+        price_data: {
+          currency: "inr",
+          product_data: { name: "Service Fee" },
+          unit_amount: Math.round(serviceFee * 100),
+        },
+        quantity: 1,
+      });
+    }
+
+    if (deliveryFee > 0) {
+      lineItems.push({
+        price_data: {
+          currency: "inr",
+          product_data: { name: "Delivery Fee" },
+          unit_amount: Math.round(deliveryFee * 100),
+        },
+        quantity: 1,
+      });
+    }
+
+    // ✅ Create Order before payment
     const order = await Order.create({
       userId,
       foodItems,
+      subtotal: parseFloat(subtotal.toFixed(2)),
+      serviceFee: parseFloat(serviceFee.toFixed(2)),
+      deliveryFee: parseFloat(deliveryFee.toFixed(2)),
       totalPrice: parseFloat(total.toFixed(2)),
       paymentMethod,
       paymentStatus: paymentMethod === "online" ? "pending" : "paid",
@@ -102,10 +150,14 @@ export const placeOrder = async (req, res) => {
       addressId,
     });
 
+    // ✅ COD returns immediately
     if (paymentMethod === "cod") {
-      return res.status(201).json({ success: true, message: "Order placed", order });
+      return res
+        .status(201)
+        .json({ success: true, message: "Order placed", order });
     }
 
+    // ✅ Stripe Checkout session
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ["card"],
       mode: "payment",
@@ -118,6 +170,7 @@ export const placeOrder = async (req, res) => {
       },
     });
 
+    // Save session ID
     order.paymentSessionId = session.id;
     await order.save();
 
@@ -173,7 +226,9 @@ export const updateOrderStatus = async (req, res) => {
 
     const order = await Order.findById(id);
     if (!order) {
-      return res.status(404).json({ success: false, message: "Order not found" });
+      return res
+        .status(404)
+        .json({ success: false, message: "Order not found" });
     }
 
     if (orderStatus) order.orderStatus = orderStatus;
