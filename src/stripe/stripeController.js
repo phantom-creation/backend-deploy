@@ -9,9 +9,8 @@ export const handleStripeWebhook = async (req, res) => {
 
   let event;
   try {
-    // Make sure you're using the raw body, not parsed JSON
     event = stripe.webhooks.constructEvent(
-      req.rawBody || req.body, // Try both in case rawBody middleware isn't working
+      req.rawBody || req.body,
       sig,
       process.env.STRIPE_WEBHOOK_SECRET
     );
@@ -20,24 +19,21 @@ export const handleStripeWebhook = async (req, res) => {
     return res.status(400).send(`Webhook Error: ${err.message}`);
   }
 
-  console.log("Received webhook event:", event.type);
+  const session = event.data.object;
+  const orderId = session.metadata?.orderId;
 
-  // Handle checkout.session.completed
+  console.log("⚡ Stripe event received:", event.type);
+
+  // ✅ PAYMENT SUCCESS
   if (event.type === "checkout.session.completed") {
-    const session = event.data.object;
-    const orderId = session.metadata.orderId;
-
-    console.log("Processing payment for order:", orderId);
-
     try {
-      // Add more detailed logging and error handling
       const updatedOrder = await Order.findByIdAndUpdate(
         orderId,
         {
           paymentStatus: "paid",
-          orderStatus: "preparing", // Optional: also update order status
+          orderStatus: "preparing",
         },
-        { new: true } // Return the updated document
+        { new: true }
       );
 
       if (!updatedOrder) {
@@ -46,26 +42,27 @@ export const handleStripeWebhook = async (req, res) => {
       }
 
       console.log("✅ Order marked as paid:", orderId);
-      console.log("Updated order:", updatedOrder);
     } catch (err) {
       console.error("❌ Error updating order:", err);
       return res.status(500).send("Error updating order");
     }
   }
 
-  // Handle payment failure
-  if (event.type === "checkout.session.expired" || event.type === "payment_intent.payment_failed") {
-    const session = event.data.object;
-    const orderId = session.metadata?.orderId;
-
+  // ❌ PAYMENT FAILED or ABANDONED
+  if (
+    event.type === "checkout.session.expired" ||
+    event.type === "payment_intent.payment_failed"
+  ) {
     if (orderId) {
       try {
-        await Order.findByIdAndUpdate(orderId, {
-          paymentStatus: "failed",
-        });
-        console.log("❌ Order marked as failed:", orderId);
+        const deleted = await Order.findByIdAndDelete(orderId);
+        if (deleted) {
+          console.log("🗑️ Deleted order due to failed/expired payment:", orderId);
+        } else {
+          console.warn("⚠️ Order not found for deletion:", orderId);
+        }
       } catch (err) {
-        console.error("Error updating failed order:", err);
+        console.error("❌ Error deleting failed order:", err);
       }
     }
   }
