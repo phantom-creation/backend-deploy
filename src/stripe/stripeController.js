@@ -1,39 +1,38 @@
-// src/stripe/stripeController.js
-import stripe from "../order/stripe.js";
+// src/stripe/stripeWebhook.js
+import Stripe from "stripe";
 import { Order } from "../order/orderModel.js";
+
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
 export const handleStripeWebhook = async (req, res) => {
   const sig = req.headers["stripe-signature"];
-  const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET;
 
   let event;
   try {
-    event = stripe.webhooks.constructEvent(req.body, sig, endpointSecret);
+    event = stripe.webhooks.constructEvent(
+      req.rawBody,
+      sig,
+      process.env.STRIPE_WEBHOOK_SECRET
+    );
   } catch (err) {
-    console.error("❌ Stripe webhook signature verification failed:", err.message);
+    console.error("Webhook signature error:", err.message);
     return res.status(400).send(`Webhook Error: ${err.message}`);
   }
 
-  // ✅ Payment successful event
+  // Handle checkout.session.completed
   if (event.type === "checkout.session.completed") {
     const session = event.data.object;
-    const orderId = session.metadata?.orderId;
+    const orderId = session.metadata.orderId;
 
     try {
-      const order = await Order.findById(orderId);
-      if (!order) {
-        console.warn("⚠️ Webhook: Order not found");
-        return res.status(404).end();
-      }
-
-      order.paymentStatus = "paid";
-      await order.save();
-
+      await Order.findByIdAndUpdate(orderId, {
+        paymentStatus: "paid",
+      });
       console.log("✅ Order marked as paid:", orderId);
     } catch (err) {
-      console.error("🔥 Webhook order update error:", err);
+      console.error("Error updating order:", err);
     }
   }
 
-  res.status(200).json({ received: true });
+  res.json({ received: true });
 };
