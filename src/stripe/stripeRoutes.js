@@ -4,7 +4,7 @@ import { handleStripeWebhook } from "./stripeController.js";
 
 const router = express.Router();
 
-// Stripe requires raw body here
-router.post("/webhook", express.raw({ type: "application/json" }), handleStripeWebhook);
+// No need to use express.raw() again here
+router.post("/webhook", handleStripeWebhook);
 
 export default router;
