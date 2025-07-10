@@ -10,6 +10,7 @@ import dishTypeRoutes from "./src/dishType/dishTypeRoutes.js";
 import foodRoutes from "./src/food/foodRoutes.js";
 import userRoutes from "./src/user/userRoutes.js";
 import orderRoutes from "./src/order/orderRoutes.js";
+import stripeRoutes from "./src/stripe/stripeRoutes.js";
 
 dotenv.config();
 
@@ -34,6 +35,8 @@ app.use(
     credentials: true,
   })
 );
+
+app.use("/api/stripe", express.raw({ type: "application/json" }), stripeRoutes);
 app.use(express.json());
 app.use(cookieParser());
 app.use(passport.initialize());

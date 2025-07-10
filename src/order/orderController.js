@@ -1,29 +1,30 @@
 // src/order/orderController.js
+import stripe from "./stripe.js";
 import { Order } from "./orderModel.js";
 import { Food } from "../food/foodModel.js";
 
 export const placeOrder = async (req, res) => {
   try {
     const userId = req.user.id;
-    const { foodItems, paymentMethod } = req.body;
+    const { foodItems, paymentMethod, addressId } = req.body;
 
-    if (!foodItems || !foodItems.length) {
+    if (!foodItems?.length) {
       return res
         .status(400)
         .json({ success: false, message: "No food items provided" });
     }
 
     let total = 0;
+    const lineItems = [];
 
     for (const item of foodItems) {
       const food = await Food.findById(item.foodId);
-      if (!food) {
+      if (!food)
         return res
           .status(404)
           .json({ success: false, message: "Food not found" });
-      }
 
-      let basePrice = food.isSizeBased
+      const basePrice = food.isSizeBased
         ? food.priceOptions.find((opt) => opt.size === item.size)?.price
         : food.price;
 
@@ -33,24 +34,67 @@ export const placeOrder = async (req, res) => {
           .json({ success: false, message: "Invalid size/price" });
       }
 
-      let addonsTotal =
+      const addonsTotal =
         item.selectedAddons?.reduce((sum, a) => sum + a.price, 0) || 0;
+      const itemTotal = (basePrice + addonsTotal) * item.quantity;
+      total += itemTotal;
 
-      total += (basePrice + addonsTotal) * item.quantity;
+      lineItems.push({
+        price_data: {
+          currency: "inr",
+          product_data: {
+            name: food.name + (item.size ? ` (${item.size})` : ""),
+          },
+          unit_amount: Math.round((basePrice + addonsTotal) * 100), // price in paise
+        },
+        quantity: item.quantity,
+      });
     }
 
-    const order = new Order({
+    // Save initial order
+    const order = await Order.create({
       userId,
       foodItems,
       totalPrice: parseFloat(total.toFixed(2)),
       paymentMethod,
       paymentStatus: paymentMethod === "online" ? "pending" : "paid",
+      orderStatus: "placed",
+      paymentSessionId: null,
+      addressId,
     });
 
+    // For COD, respond now
+    if (paymentMethod === "cod") {
+      return res
+        .status(201)
+        .json({ success: true, message: "Order placed", order });
+    }
+
+    // Create Stripe Checkout Session
+    const session = await stripe.checkout.sessions.create({
+      payment_method_types: ["card"],
+      mode: "payment",
+      line_items: lineItems,
+      customer_email: req.user.email,
+      success_url: `${process.env.CLIENT_URL}/payment-success?session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${process.env.CLIENT_URL}/payment-cancel`,
+      metadata: {
+        orderId: order._id.toString(),
+      },
+    });
+
+    // Save session ID in order
+    order.paymentSessionId = session.id;
     await order.save();
 
-    res.status(201).json({ success: true, message: "Order placed", order });
+    // Send session ID to frontend
+    res.status(200).json({
+      success: true,
+      message: "Stripe session created",
+      sessionId: session.id,
+    });
   } catch (err) {
+    console.error("Stripe Checkout Error:", err);
     res.status(500).json({ success: false, message: err.message });
   }
 };
@@ -96,7 +140,9 @@ export const updateOrderStatus = async (req, res) => {
 
     const order = await Order.findById(id);
     if (!order) {
-      return res.status(404).json({ success: false, message: "Order not found" });
+      return res
+        .status(404)
+        .json({ success: false, message: "Order not found" });
     }
 
     if (orderStatus) order.orderStatus = orderStatus;
