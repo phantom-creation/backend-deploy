@@ -140,7 +140,7 @@ export const placeOrder = async (req, res) => {
       deliveryFee: parseFloat(deliveryFee.toFixed(2)),
       totalPrice: parseFloat(total.toFixed(2)),
       paymentMethod,
-      paymentStatus: paymentMethod === "online" ? "pending" : "paid",
+      paymentStatus: paymentMethod === "online" ? "pending" : "pending",
       orderStatus: "placed",
       paymentSessionId: null,
       addressId,
